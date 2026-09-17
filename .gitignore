@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.sqlite3
+.pytest_cache/
+.ruff_cache/
+
+# Environnement
+.env
+.env.local
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Divers
+.DS_Store
+*.log
