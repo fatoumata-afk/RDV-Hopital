@@ -11,13 +11,15 @@ from datetime import date, time, timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import DoctorProfile, User, UserRole
 from apps.accounts.services import create_staff_user, register_patient
+from apps.appointments.models import Appointment
 from apps.appointments.services import book_appointment
 from apps.organization.models import Department, Room, Specialty
-from apps.scheduling.models import DoctorSchedule
+from apps.scheduling.models import DoctorSchedule, Slot
 from apps.scheduling.services import available_slots
 
 DEMO_PASSWORD = "Demo2026!hopital"
@@ -76,7 +78,13 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         if options["reset"]:
-            User.objects.filter(email__endswith="@demo.test").delete()
+            demo_users = User.objects.filter(email__endswith="@demo.test")
+            # Les rendez-vous protègent les profils : on les supprime d'abord.
+            Appointment.objects.filter(
+                Q(patient__user__in=demo_users) | Q(doctor__user__in=demo_users)
+            ).delete()
+            Slot.objects.filter(doctor__user__in=demo_users).delete()
+            demo_users.delete()
             self.stdout.write("Comptes de démonstration supprimés.")
 
         specialties = {
