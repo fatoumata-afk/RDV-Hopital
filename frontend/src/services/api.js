@@ -39,9 +39,9 @@ export const appointmentsApi = {
   list: (params) => http.get('/appointments/', { params }).then(unwrap),
   retrieve: (id) => http.get(`/appointments/${id}/`).then(unwrap),
   book: (payload) => http.post('/appointments/', payload).then(unwrap),
-  upcoming: () => http.get('/appointments/upcoming/').then(unwrap),
-  history: () => http.get('/appointments/history/').then(unwrap),
-  today: () => http.get('/appointments/today/').then(unwrap),
+  upcoming: () => http.get('/appointments/upcoming/').then(asList),
+  history: () => http.get('/appointments/history/').then(asList),
+  today: () => http.get('/appointments/today/').then(asList),
   cancel: (id, reason) => http.post(`/appointments/${id}/cancel/`, { reason }).then(unwrap),
   setStatus: (id, status, note = '') =>
     http.post(`/appointments/${id}/status/`, { status, note }).then(unwrap),
@@ -52,7 +52,7 @@ export const appointmentsApi = {
 export const checkinApi = {
   verify: (token) => http.post('/checkin/verify/', { token }).then(unwrap),
   confirm: (token, source) => http.post('/checkin/confirm/', { token, source }).then(unwrap),
-  recent: () => http.get('/checkin/recent/').then(unwrap),
+  recent: () => http.get('/checkin/recent/').then(asList),
 }
 
 export const notificationsApi = {
