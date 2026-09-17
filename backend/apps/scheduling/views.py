@@ -83,6 +83,8 @@ class DoctorScheduleViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, "swagger_fake_view", False):
+            return DoctorSchedule.objects.none()
         queryset = DoctorSchedule.objects.select_related("doctor__user")
         if user.role == UserRole.ADMIN:
             return queryset
@@ -110,6 +112,8 @@ class TimeOffViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, "swagger_fake_view", False):
+            return TimeOff.objects.none()
         queryset = TimeOff.objects.select_related("doctor__user")
         if user.role == UserRole.ADMIN:
             return queryset

@@ -1,7 +1,7 @@
 from django.db.models import Count, Q
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, status, viewsets
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -38,6 +38,8 @@ class AppointmentViewSet(
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, "swagger_fake_view", False):
+            return Appointment.objects.none()
         queryset = Appointment.objects.select_related(
             "patient__user", "doctor__user", "specialty", "department", "room", "check_in"
         ).prefetch_related("status_history")
@@ -52,7 +54,7 @@ class AppointmentViewSet(
     def get_serializer_class(self):
         if self.action == "create":
             return AppointmentCreateSerializer
-        if self.request.user.role in {UserRole.DOCTOR, UserRole.ADMIN}:
+        if getattr(self.request.user, "role", None) in {UserRole.DOCTOR, UserRole.ADMIN}:
             return DoctorAppointmentSerializer
         if self.action == "retrieve":
             return AppointmentDetailSerializer
@@ -153,6 +155,22 @@ class AdminStatsView(APIView):
 
     permission_classes = [IsAdmin]
 
+    @extend_schema(
+        responses=inline_serializer(
+            name="AdminStats",
+            fields={
+                "patients": serializers.IntegerField(),
+                "doctors": serializers.IntegerField(),
+                "specialties": serializers.IntegerField(),
+                "departments": serializers.IntegerField(),
+                "appointments_total": serializers.IntegerField(),
+                "appointments_today": serializers.IntegerField(),
+                "arrived_today": serializers.IntegerField(),
+                "by_status": serializers.DictField(child=serializers.IntegerField()),
+                "by_department": serializers.ListField(child=serializers.DictField()),
+            },
+        )
+    )
     def get(self, request):
         from apps.accounts.models import DoctorProfile, PatientProfile
         from apps.organization.models import Department, Specialty

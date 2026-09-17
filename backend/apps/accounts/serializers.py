@@ -94,7 +94,7 @@ class CurrentUserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "email", "role", "must_change_password"]
 
-    def get_profile(self, user):
+    def get_profile(self, user) -> dict | None:
         if user.is_patient and hasattr(user, "patient_profile"):
             return PatientProfileSerializer(user.patient_profile).data
         if user.is_doctor and hasattr(user, "doctor_profile"):
@@ -200,6 +200,12 @@ class StaffUserCreateSerializer(serializers.Serializer):
                     f"{key}_id" if key in {"specialty", "department", "room"} else key
                 ] = value
         return create_staff_user(**validated_data, **profile_fields)
+
+
+class LogoutSerializer(serializers.Serializer):
+    """Jeton de rafraîchissement à révoquer lors de la déconnexion."""
+
+    refresh = serializers.CharField()
 
 
 class ChangePasswordSerializer(serializers.Serializer):
