@@ -1,6 +1,10 @@
 from django.db.models import Count, Q
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    PolymorphicProxySerializer,
+    extend_schema,
+    inline_serializer,
+)
 from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -21,6 +25,12 @@ from .serializers import (
     StatusChangeSerializer,
 )
 from .services import book_appointment, cancel_appointment, transition_status
+
+APPOINTMENT_DETAIL_RESPONSE = PolymorphicProxySerializer(
+    component_name="AppointmentDetailResponse",
+    serializers=[AppointmentDetailSerializer, DoctorAppointmentSerializer],
+    resource_type_field_name=None,
+)
 
 
 class AppointmentViewSet(
@@ -120,7 +130,17 @@ class AppointmentViewSet(
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @extend_schema(request=CancelAppointmentSerializer, responses=AppointmentDetailSerializer)
+    def detail_response(self, appointment):
+        """Répond avec la même forme que la liste du rôle appelant, pour que le
+        frontend puisse remplacer un élément sans perdre de champs."""
+        serializer_class = (
+            DoctorAppointmentSerializer
+            if self.request.user.role in {UserRole.DOCTOR, UserRole.ADMIN}
+            else AppointmentDetailSerializer
+        )
+        return Response(serializer_class(appointment, context={"request": self.request}).data)
+
+    @extend_schema(request=CancelAppointmentSerializer, responses=APPOINTMENT_DETAIL_RESPONSE)
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
         appointment = self.get_object()
@@ -131,9 +151,9 @@ class AppointmentViewSet(
             cancelled_by=request.user,
             reason=serializer.validated_data.get("reason", ""),
         )
-        return Response(AppointmentDetailSerializer(appointment, context={"request": request}).data)
+        return self.detail_response(appointment)
 
-    @extend_schema(request=StatusChangeSerializer, responses=AppointmentDetailSerializer)
+    @extend_schema(request=StatusChangeSerializer, responses=APPOINTMENT_DETAIL_RESPONSE)
     @action(detail=True, methods=["post"], url_path="status")
     def change_status(self, request, pk=None):
         if request.user.role not in {UserRole.DOCTOR, UserRole.ADMIN}:
@@ -147,7 +167,7 @@ class AppointmentViewSet(
             changed_by=request.user,
             note=serializer.validated_data.get("note", ""),
         )
-        return Response(AppointmentDetailSerializer(appointment, context={"request": request}).data)
+        return self.detail_response(appointment)
 
 
 class AdminStatsView(APIView):

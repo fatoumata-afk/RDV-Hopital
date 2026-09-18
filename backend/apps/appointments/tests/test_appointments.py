@@ -186,6 +186,9 @@ def test_doctor_changes_status_of_own_appointment(api, patient, doctor, future_s
     )
     assert response.status_code == 200
     assert response.data["status"] == AppointmentStatus.CONFIRMED
+    # Même forme que la liste du médecin : le frontend remplace la ligne sans perdre de champs.
+    assert response.data["patient_record_number"] == patient.medical_record_number
+    assert response.data["patient_phone"] == patient.user.phone
 
 
 def test_upcoming_endpoint_returns_next_appointments(api, patient, future_slot):
