@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.accounts.models import DoctorProfile
@@ -9,6 +10,7 @@ class DoctorScheduleSerializer(serializers.ModelSerializer):
     """Le médecin est déduit de l'utilisateur connecté, sauf pour un administrateur."""
 
     weekday_label = serializers.CharField(source="get_weekday_display", read_only=True)
+    valid_from = serializers.DateField(required=False, default=timezone.localdate)
     doctor = serializers.PrimaryKeyRelatedField(
         queryset=DoctorProfile.objects.all(), required=False
     )
