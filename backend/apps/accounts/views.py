@@ -16,6 +16,7 @@ from .serializers import (
     CurrentUserSerializer,
     DoctorProfileSerializer,
     LoginSerializer,
+    LogoutSerializer,
     PatientProfileSerializer,
     PatientRegistrationSerializer,
     StaffUserCreateSerializer,
@@ -57,6 +58,7 @@ class RegisterView(APIView):
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(request=LogoutSerializer, responses={205: None})
     def post(self, request):
         refresh = request.data.get("refresh")
         if refresh:

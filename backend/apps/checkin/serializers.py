@@ -51,7 +51,7 @@ class CheckInResultSerializer(serializers.ModelSerializer):
         model = CheckIn
         fields = ["id", "arrived_at", "source", "direction_note", "appointment"]
 
-    def get_appointment(self, check_in):
+    def get_appointment(self, check_in) -> dict:
         return CheckInAppointmentSerializer.from_appointment(check_in.appointment).data
 
 

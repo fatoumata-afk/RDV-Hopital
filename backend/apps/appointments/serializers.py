@@ -48,7 +48,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_can_cancel(self, appointment):
+    def get_can_cancel(self, appointment) -> bool:
         from .services import can_patient_cancel
 
         if appointment.status not in {AppointmentStatus.BOOKED, AppointmentStatus.CONFIRMED}:

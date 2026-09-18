@@ -15,7 +15,14 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
         return Notification.objects.filter(recipient=self.request.user)
+
+    @action(detail=False, methods=["post"], url_path="read-all")
+    def read_all(self, request):
+        updated = self.get_queryset().filter(read_at__isnull=True).update(read_at=timezone.now())
+        return Response({"updated": updated})
 
     @action(detail=True, methods=["post"])
     def read(self, request, pk=None):

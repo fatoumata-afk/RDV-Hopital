@@ -75,6 +75,17 @@ def test_doctor_cannot_create_schedule_for_another_doctor(api, doctor, other_doc
     assert response.data["doctor"] == other_doctor.id
 
 
+def test_schedule_defaults_valid_from_to_today(api, doctor):
+    authenticate(api, doctor.user.email)
+    response = api.post(
+        "/api/v1/schedules/",
+        {"weekday": 5, "start_time": "08:00", "end_time": "12:00", "slot_duration": 30},
+        format="json",
+    )
+    assert response.status_code == 201
+    assert response.data["valid_from"] == date.today().isoformat()
+
+
 def test_schedule_rejects_inverted_hours(api, doctor):
     authenticate(api, doctor.user.email)
     response = api.post(
