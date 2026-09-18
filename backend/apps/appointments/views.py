@@ -193,6 +193,7 @@ class AdminStatsView(APIView):
     )
     def get(self, request):
         from apps.accounts.models import DoctorProfile, PatientProfile
+        from apps.checkin.models import CheckIn
         from apps.organization.models import Department, Specialty
 
         today = timezone.localdate()
@@ -213,9 +214,9 @@ class AdminStatsView(APIView):
                 "departments": Department.objects.filter(is_active=True).count(),
                 "appointments_total": Appointment.objects.count(),
                 "appointments_today": Appointment.objects.filter(scheduled_at__date=today).count(),
-                "arrived_today": Appointment.objects.filter(
-                    scheduled_at__date=today, status=AppointmentStatus.ARRIVED
-                ).count(),
+                # Arrivées réellement enregistrées aujourd'hui, quel que soit le statut atteint
+                # ensuite (en consultation, terminé…).
+                "arrived_today": CheckIn.objects.filter(arrived_at__date=today).count(),
                 "by_status": by_status,
                 "by_department": by_department,
             }

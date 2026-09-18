@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.appointments.models import Appointment, AppointmentStatus
 from apps.appointments.services import book_appointment, cancel_appointment, transition_status
+from apps.checkin.models import CheckIn
 from apps.common.exceptions import BusinessRuleError, ConflictError
 from apps.common.test_utils import authenticate
 from apps.scheduling.models import SlotStatus
@@ -206,6 +207,21 @@ def test_admin_stats(api, admin_user, patient, future_slot):
     assert response.status_code == 200
     assert response.data["appointments_total"] == 1
     assert response.data["doctors"] >= 1
+    assert response.data["arrived_today"] == 0
+
+
+def test_admin_stats_count_today_check_ins(api, admin_user, patient, future_slot):
+    appointment = book_appointment(patient=patient, slot_id=future_slot.id)
+    CheckIn.objects.create(appointment=appointment)
+    transition_status(
+        appointment=appointment,
+        to_status=AppointmentStatus.CONFIRMED,
+        changed_by=admin_user,
+    )
+    authenticate(api, admin_user.email)
+    response = api.get("/api/v1/admin/stats/")
+    # L'arrivée reste comptée même si le rendez-vous a changé de statut depuis.
+    assert response.data["arrived_today"] == 1
 
 
 def test_stats_are_admin_only(api, patient):
