@@ -56,6 +56,9 @@ export function relativeTime(value) {
   return formatter.format(Math.round(diff / 1000), 'second')
 }
 
+/** Statuts encore actifs : miroir de ACTIVE_STATUSES côté backend. */
+export const ACTIVE_STATUSES = ['BOOKED', 'CONFIRMED', 'ARRIVED', 'IN_CONSULTATION']
+
 export const STATUS_STYLES = {
   BOOKED: { label: 'Réservé', class: 'bg-sky-100 text-sky-800' },
   CONFIRMED: { label: 'Confirmé', class: 'bg-brand-100 text-brand-800' },

@@ -10,7 +10,7 @@ import { appointmentsApi } from '@/services/api'
 import { errorMessage } from '@/services/http'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
-import { formatDate, formatTime } from '@/utils/format'
+import { ACTIVE_STATUSES, formatDate, formatTime } from '@/utils/format'
 
 const auth = useAuthStore()
 const toasts = useToastStore()
@@ -42,6 +42,10 @@ async function setStatus(appointment, status) {
   try {
     const updated = await appointmentsApi.setStatus(appointment.id, status)
     today.value = today.value.map((item) => (item.id === updated.id ? updated : item))
+    // Un rendez-vous terminé, annulé ou absent sort de la liste des prochains.
+    upcoming.value = ACTIVE_STATUSES.includes(updated.status)
+      ? upcoming.value.map((item) => (item.id === updated.id ? updated : item))
+      : upcoming.value.filter((item) => item.id !== updated.id)
     toasts.success('Statut mis à jour.')
   } catch (err) {
     toasts.error(errorMessage(err, 'Transition de statut refusée.'))
